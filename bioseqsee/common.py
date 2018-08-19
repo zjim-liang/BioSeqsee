@@ -223,3 +223,16 @@ def check_title(fileobj: FileHandle,
         fileobj.seek(ori_pos, 0)
     return title
 
+
+def cmdExists(cmd: str) -> bool:
+
+    # The function is copied from the software "poreFUME".
+    # The MIT License (MIT) Copyright (c) 2016 Eric van der Helm.
+    '''
+    Check if the given command exists in the environment PATH.
+    '''
+    return any(
+        os.access(os.path.join(path, cmd), os.X_OK)
+        for path in os.environ['PATH'].split(os.pathsep)
+    )
+
