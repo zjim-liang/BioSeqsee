@@ -1,10 +1,12 @@
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
-import sys
 import os
 import re
+import sys
+import time
 
+from datetime import datetime
 from collections import Iterable
 
 if sys.version_info.major < 3:
@@ -34,49 +36,88 @@ WHITE       = '\x1b[37m'
 RESET_COLOR = '\x1b[39m'
 
 
-def add_color_and_style(string, color=CYAN, style=NORMAL) -> str:
-    '''
-    Get a new string with the given color and style from the original.
-    Return a cyan normal-style string by default.
-
-    @param: string 
-    @param: color 
-    @param: style 
+class newstring(str):
     
-    @return: a colored and styled string
-    '''
-    return color + style + string + RESET_ALL
+    def add_color_and_style(self, color=CYAN, style=NORMAL):
+        # type: (self, str, str) -> newstring
+        '''
+        Get a new string with the given color and style from the original.
+        Return a cyan normal-style string by default.
+    
+        @param: color 
+        @param: style 
+        
+        @return: a newstring colored and styled 
+        '''
+        return newstring(color + style + self + RESET_ALL)
+    
+    
+    def check_delimiter(self, priority=(';', ',', '|')):
+        # type: (self, Iterable) -> str or None
+        '''
+        In an annotation file, the value in each column are often 
+        delimited by symbols like ';', ',', or '|'. This function 
+        is for finding the proper delimiter in the given string.
+    
+        @param: string   -- The input string for checking
+        @param: priority -- An iterable of candidate symbols 
+                            with priority. 
+                            Notice: The order of the symbols 
+                            matters. e.g. if both ';' and ',' 
+                            are in the input string, return 
+                            ';' rather than ',' by default.
+    
+        @return:            A proper symbol as the delimiter, 
+                            or ``None`` if nothing found.
+        '''
+        for mark in priority:
+            if mark in string:
+                return mark
+        return None
+    
+    
+    def strip(self, pattern, position='a'):
+        # type: (self, str, str) -> newstring
+        '''
+        Remove the pattern as a whole from the start or the end 
+        or both the start and the end of the input string.
+    
+        @param: string   -- The input string to deal with.
+        @param: pattern  -- The prefix or the suffix you want 
+                            to remove from the input string. 
+                            The type should be a string.
+        @param: position -- Input 'l' if lstrip, or 'r' if 
+                            rstrip, or 'a' if you need both ends.
+                            Default: 'a'.
+        '''
+        if not isinstance(pattern, str):
+            raise TypeError('The arguments should be a string!')
+        
+        if position == 'a':
+            return self.lstrip(pattern).rstrip(pattern)
+        elif position == 'l':
+            return self.lstrip(pattern)
+        elif position == 'r':
+            return self.rstrip(pattern)
+    
+    
+    def lstrip(self, pattern):
+        # type: (self, str) -> newstring
+        while self.startswith(pattern):
+            self = newstring(self[len(pattern):])
+        return self
+    
+    
+    def rstrip(string, pattern):
+        # type: (self, str) -> newstring
+        while self.endswith(pattern):
+            self = newstring(self[:-len(pattern)])
+        return self
+    
 
-
-def check_delimiter(string: str, 
-                    priority: Iterable = (';', ',', '|')) -> str or None:
-    '''
-    In an annotation file, the value in each column are often 
-    delimited by symbols like ';', ',', or '|'. This function 
-    is for finding the proper delimiter in the given string.
-
-    @param: string   -- The input string for checking
-    @param: priority -- An iterable of candidate symbols 
-                        with priority. 
-                        Notice: The order of the symbols 
-                        matters. e.g. if both ';' and ',' 
-                        are in the input string, return 
-                        ';' rather than ',' by default.
-
-    @return:            A proper symbol as the delimiter, 
-                        or ``None`` if nothing found.
-    '''
-    for mark in priority:
-        if mark in string:
-            return mark
-    return None
-
-
-def check_title(fileobj: FileHandle, 
-                spec_names: Iterable = (), 
-                comeback: bool = False, 
-                min_col_num: int = 3, 
-                header_mark: str = '#') -> dict:
+def check_title(fileobj, spec_names=(), comeback=False, 
+                min_col_num=3, header_mark='#'):
+    # type: (FileHandle, Iterable, bool, int, str) -> dict
     '''
     Check the indices of column names in the given file object of 
     a tab-delimited file (either a VCF file or a TSV file is ok).
@@ -224,7 +265,8 @@ def check_title(fileobj: FileHandle,
     return title
 
 
-def cmdExists(cmd: str) -> bool:
+def cmdExists(cmd):
+    # type: (str, ) -> bool
 
     # The function is copied from the software "poreFUME".
     # The MIT License (MIT) Copyright (c) 2016 Eric van der Helm.
@@ -235,4 +277,40 @@ def cmdExists(cmd: str) -> bool:
         os.access(os.path.join(path, cmd), os.X_OK)
         for path in os.environ['PATH'].split(os.pathsep)
     )
+
+
+def current_time(format='%Y%m%d'):
+    # type: (str, ) -> str
+    '''
+    Get the current date and time using datetime.datetime.now().
+
+    @param: format -- The format for datetime.datetime.now().strftime()
+
+    '''
+    return datetime.now().strftime(format)
+
+
+def mkdir(path, warning=False):
+    # type: (str, bool) -> int
+    '''
+    Make a new directory and:
+        a) create all the intermediate directories as required; 
+        b) without OSError/FileExistsError if it already exists.
+
+    @param: path    -- Path to the new directory you want to make
+    @param: warning -- Set to True if you need warnings into STDERR
+
+    @return: exitcode -- If the new directory is made 
+                            successfully, return 0.
+                         If the directory already exists, return 1.
+    '''
+    if not os.path.exists(path):
+        os.makedirs(path)
+        return 0
+    else:
+        if warning:
+            sys.stderr.write(
+                '[WARNING] {} already exists!\n'.format(path))
+        return 1
+
 
