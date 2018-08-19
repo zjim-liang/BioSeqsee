@@ -35,7 +35,7 @@ RESET_COLOR = '\x1b[39m'
 
 
 def add_color_and_style(string, color=CYAN, style=NORMAL) -> str:
-    """
+    '''
     Get a new string with the given color and style from the original.
     Return a cyan normal-style string by default.
 
@@ -44,13 +44,13 @@ def add_color_and_style(string, color=CYAN, style=NORMAL) -> str:
     @param: style 
     
     @return: a colored and styled string
-    """
+    '''
     return color + style + string + RESET_ALL
 
 
 def check_delimiter(string: str, 
                     priority: Iterable = (';', ',', '|')) -> str or None:
-    """
+    '''
     In an annotation file, the value in each column are often 
     delimited by symbols like ';', ',', or '|'. This function 
     is for finding the proper delimiter in the given string.
@@ -65,7 +65,7 @@ def check_delimiter(string: str,
 
     @return:            A proper symbol as the delimiter, 
                         or ``None`` if nothing found.
-    """
+    '''
     for mark in priority:
         if mark in string:
             return mark
@@ -77,7 +77,7 @@ def check_title(fileobj: FileHandle,
                 comeback: bool = False, 
                 min_col_num: int = 3, 
                 header_mark: str = '#') -> dict:
-    """
+    '''
     Check the indices of column names in the given file object of 
     a tab-delimited file (either a VCF file or a TSV file is ok).
     
@@ -139,7 +139,7 @@ def check_title(fileobj: FileHandle,
         DO NOT USE a for loop when you need the value of fileobj.tell() -- a 
     for loop in reading files seems to read lines one by one BUT IT DOES NOT! 
     A for loop reads a bulk of characters each time. USE A WHILE LOOP.
-    """
+    '''
     # 0. Initialize: 
     title = {'.len': int(),           # for the number of the columns
              '.Column_Names': list(), # for the names of the columns
